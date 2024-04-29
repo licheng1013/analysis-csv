@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func main() {
@@ -31,18 +32,38 @@ func main() {
 	}
 
 	// 获取第4行的所有列数据
-	row := records[3] // 因为索引从0开始，所以第4行是索引3
+	Analysis(records[3], records, "1_"+f.Name(), DefaultParse)
+	Analysis(records[4], records, "2_"+f.Name(), ParseWithM)
+	Analysis(records[5], records, "3_"+f.Name(), DefaultParse)
 
+}
+
+func ParseWithM(str string) float64 {
+	str = strings.ReplaceAll(str, "m", "")
+	num, e := strconv.ParseFloat(str, 64)
+	if e != nil {
+		fmt.Println("解析失败，非浮点数", str)
+		return 0
+	}
+	return num
+}
+
+func DefaultParse(str string) float64 {
+	num, e := strconv.ParseFloat(str, 64)
+	if e != nil {
+		fmt.Println("解析失败，非浮点数", str)
+		return 0
+	}
+	return num
+}
+
+func Analysis(row []string, records [][]string, name string, parse func(string) float64) {
 	// 对比第4行的所有列数据，获取最大值和最小值
 	var maxF, minF float64
 	var maxI, minI int
 	for index, v := range row {
 		// 转换为浮点数
-		numF, e := strconv.ParseFloat(v, 64)
-		if e != nil {
-			fmt.Println("解析失败，非浮点数", v)
-			return
-		}
+		numF := parse(v)
 		if index == 0 {
 			maxF = numF
 			minF = numF
@@ -66,7 +87,7 @@ func main() {
 		data = append(data, []string{v[maxI], v[minI]})
 	}
 	// 保存到新文件中如果存在则覆盖，不存在则创建
-	f, err = os.Create("new_" + f.Name())
+	f, err := os.Create(name)
 	if err != nil {
 		panic("文件创建失败:" + err.Error())
 	}
